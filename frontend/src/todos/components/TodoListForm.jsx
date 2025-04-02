@@ -1,74 +1,101 @@
-import React, { useState } from 'react'
-import { TextField, Card, CardContent, CardActions, Button, Typography } from '@mui/material'
-import DeleteIcon from '@mui/icons-material/Delete'
-import AddIcon from '@mui/icons-material/Add'
+import React, { useState, useEffect } from "react";
+import {
+  TextField,
+  Card,
+  CardContent,
+  Button,
+  Typography,
+  Checkbox,
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CheckIcon from "@mui/icons-material/Check";
 
-export const TodoListForm = ({ todoList, saveTodoList }) => {
-  const [todos, setTodos] = useState(todoList.todos)
+export const TodoListForm = ({
+  todoList,
+  todos: existingTodos,
+  addTodoToList,
+  deleteTodo,
+  toggleTodoCompletion,
+}) => {
+  const [todos, setTodos] = useState([...(existingTodos || [])]);
+  
 
-  const handleSubmit = (event) => {
-    event.preventDefault()
-    saveTodoList(todoList.id, { todos })
-  }
-
+  useEffect(() => {
+    if (todos.length === 0 || todos.at(-1)?.text) {
+      setTodos([...todos, { text: "", completed: false }]);
+    }
+  }, [todos]);
+ 
+  // add some debounce for saving?
+  // save on blur, with optimistic response?
+  const handleOnChange = (event, index) => {
+    const updatedTodos = [...todos];
+    updatedTodos[index].text = event.target.value;
+    setTodos(updatedTodos);
+  };
+  
+  const handleOnBlur = (event, id) => {
+    const text = event.target.value.trim();
+    
+    // Only add if there is text
+    if (text !== "") {
+      addTodoToList(id, text);
+    }
+  };
+  
+  const handleKeyDown = (event, index, id) => {
+    if (event.key === "Enter" || event.key === "Tab") {
+      event.preventDefault();
+      const text = event.target.value.trim();
+      if (text !== "") {
+        addTodoToList(id, text);
+      }
+    }
+  };
+  
   return (
-    <Card sx={{ margin: '0 1rem' }}>
+    <Card sx={{ margin: "0 1rem" }}>
       <CardContent>
-        <Typography component='h2'>{todoList.title}</Typography>
+        <Typography component="h2">{todoList.title}</Typography>
         <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}
+          style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
         >
-          {todos.map((name, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-              <Typography sx={{ margin: '8px' }} variant='h6'>
+          {todos?.map((todo, index) => (
+            <div key={index} style={{ display: "flex", alignItems: "center" }}>
+              <Typography sx={{ margin: "8px" }} variant="h6">
                 {index + 1}
               </Typography>
               <TextField
-                sx={{ flexGrow: 1, marginTop: '1rem' }}
-                label='What to do?'
-                value={name}
-                onChange={(event) => {
-                  setTodos([
-                    // immutable update
-                    ...todos.slice(0, index),
-                    event.target.value,
-                    ...todos.slice(index + 1),
-                  ])
-                }}
+                sx={{ flexGrow: 1, marginTop: "1rem" }}
+                label="What to do?"
+                value={todo.text}
+                onChange={(event) => handleOnChange(event, index)}
+                onBlur={(event) => handleOnBlur(event, todoList.id)}
+                onKeyDown={(event) => handleKeyDown(event, index, todoList.id)}
               />
-              <Button
-                sx={{ margin: '8px' }}
-                size='small'
-                color='secondary'
-                onClick={() => {
-                  setTodos([
-                    // immutable delete
-                    ...todos.slice(0, index),
-                    ...todos.slice(index + 1),
-                  ])
-                }}
-              >
-                <DeleteIcon />
-              </Button>
+              {todo?.text?.trim() !== "" && todo.id && (
+                <Button
+                  sx={{ margin: "8px" }}
+                  size="small"
+                  color="secondary"
+                  onClick={() => deleteTodo(todoList.id, todo.id)}
+                >
+                  <DeleteIcon />
+                </Button>
+              )}
+              {todo.id && (
+                <Checkbox
+                  onClick={async () =>
+                    toggleTodoCompletion(todoList.id, todo.id, !todo.completed)
+                  }
+                >
+                  <CheckIcon />
+                </Checkbox>
+              )}
             </div>
           ))}
-          <CardActions>
-            <Button
-              type='button'
-              color='primary'
-              onClick={() => {
-                setTodos([...todos, ''])
-              }}
-            >
-              Add Todo <AddIcon />
-            </Button>
-            <Button type='submit' variant='contained' color='primary'>
-              Save
-            </Button>
-          </CardActions>
         </form>
       </CardContent>
     </Card>
-  )
-}
+  );
+};

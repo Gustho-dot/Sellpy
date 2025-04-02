@@ -2,11 +2,13 @@
   "type": "module",
   "scripts": {
     "lint": "eslint --ext .js src",
-    "start": "node --watch src/index.js"
+    "start": "nodemon --legacy-watch --watch src --ext js"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "sqlite": "5.1.1",
+    "sqlite3": "5.1.7"
   },
   "devDependencies": {
     "eslint": "^8.57.0"

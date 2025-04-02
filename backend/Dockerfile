@@ -11,5 +11,4 @@ COPY . .
 
 EXPOSE 3001
 
-# Start the backend with nodemon for hot reloading
-CMD ["npx", "nodemon", "src/index.js"]
+CMD ["node", "--watch", "src/index.js"]

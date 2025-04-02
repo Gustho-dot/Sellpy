@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint --ext .js src",
-    "start": "nodemon --legacy-watch --watch src --ext js"
+    "start": "node --watch src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

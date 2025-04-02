@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/usr/src/app
+      - ./backend/src/db:/usr/src/app/src/db 
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - frontend
+    command: ["npx", "nodemon", "src/index.js"]
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/usr/src/app
+    environment:
+      - NODE_ENV=development
+    command: ["npm", "start"]
+
+volumes:
+  db:
+    driver: local

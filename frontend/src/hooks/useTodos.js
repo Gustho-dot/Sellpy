@@ -1,28 +1,29 @@
 import { useState, useEffect } from 'react';
 import { makeTodoAPIRequest } from '../api/makeRequest.js';
 
-//TODO: Break up this into two custom hooks. This state is messy and is duplicating todos.
 const useTodos = () => {
   const [todoLists, setTodoLists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchTodoLists = async () => {
-      try {
-        const result = await makeTodoAPIRequest({
-          path: 'todoLists',
-          method: 'GET',
-        });
-        setTodoLists(result);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-    fetchTodoLists();
+ 
+    getAllTodoLists();
   }, []);
+
+  const getAllTodoLists = async () => {
+    try {
+      const result = await makeTodoAPIRequest({
+        path: 'todoLists',
+        method: 'GET',
+      });
+      setTodoLists(result);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
 
   const saveTodoList = async (listId, title) => {
     try {
@@ -38,29 +39,20 @@ const useTodos = () => {
 
   const addTodoToList = async (listId, text) => {
     try {
-      const newTodo = { text, completed: false };
-      
-      const targetList = todoLists.find((list) => list.id === listId);
-      
-      if (!targetList) {
-        throw new Error(`Todo list with id ${listId} not found`);
-      }
-      
-      const currentTodos = [...(targetList.todos || [])];
-      
       const addedTodo = await makeTodoAPIRequest({
         path: `todoLists/${listId}/todos`,
         method: 'POST',
-        body: newTodo,
+        body: {
+          text,
+          completed: false,
+        },
       });
-      
-      // make this reusable
       setTodoLists((prev) =>
         prev.map((list) => {
           if (list.id === listId) {
             return {
               ...list,
-              todos: [...currentTodos, addedTodo || newTodo]
+              todos: [...(list.todos ?? []), addedTodo],
             };
           }
           return list;
@@ -79,9 +71,8 @@ const useTodos = () => {
         method: 'PUT',
         body: { completed, id: todoId },
       });
-      //make this into helper function
-      setTodoLists((prev) => {
-        return prev.map((list) => {
+      setTodoLists((prev) =>
+        prev.map((list) => {
           if (list.id === listId) {
             const updatedTodos = list.todos.map((todo) =>
               todo.id === todoId ? { ...todo, completed } : todo
@@ -89,8 +80,8 @@ const useTodos = () => {
             return { ...list, todos: updatedTodos };
           }
           return list;
-        });
-      });
+        })
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -102,17 +93,15 @@ const useTodos = () => {
         path: `todoLists/${listId}/todos/${todoId}`,
         method: 'DELETE',
       });
-
-      // fix this so instant update
-      setTodoLists((prev) => {
-        return prev.map((list) => {
+      setTodoLists((prev) =>
+        prev.map((list) => {
           if (list.id === listId) {
             const updatedTodos = list.todos.filter((todo) => todo.id !== todoId);
             return { ...list, todos: updatedTodos };
           }
           return list;
-        });
-      });
+        })
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -123,13 +112,25 @@ const useTodos = () => {
       const createdList = await makeTodoAPIRequest({
         path: 'todoLists',
         method: 'POST',
-        body: {title: title},
+        body: { title: title },
       });
       setTodoLists((prev) => [...prev, createdList]);
     } catch (err) {
       setError(err.message);
     }
   };
+
+  const deleteTodoList = async (id) => {
+    try {
+      await makeTodoAPIRequest({
+        path: `todoLists/${id}`,
+        method: 'DELETE'
+      })
+      setTodoLists((prev) => prev.filter((list) => list.id !== id));
+    } catch (err) {
+      setError(err.message)
+    } 
+  } 
 
   return {
     todoLists,
@@ -140,6 +141,7 @@ const useTodos = () => {
     toggleTodoCompletion,
     deleteTodo,
     addNewTodoList,
+    deleteTodoList,
   };
 };
 

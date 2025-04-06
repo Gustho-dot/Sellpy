@@ -30,11 +30,8 @@ export async function makeTodoAPIRequest (options) {
 
 
     if (!response.ok) {
-         // log, retry
-        if (response instanceof Error) {
-            throw new Error(`The API responded with: ${response.status}  ${response.message} `);
-        }
-        throw new Error('Could not connect to the API.')
+        const message = await response.text();
+        throw new Error(`API Error: ${response.status} - ${message}`);
     }
 
     return response.json();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   TextField,
   Card,
@@ -12,56 +12,30 @@ import CheckIcon from "@mui/icons-material/Check";
 
 export const TodoListForm = ({
   todoList,
-  todos: existingTodos,
   addTodoToList,
   deleteTodo,
   toggleTodoCompletion,
 }) => {
-  const [todos, setTodos] = useState([...(existingTodos || [])]);
-  
+  const [newTodoText, setNewTodoText] = useState("");
 
-  useEffect(() => {
-    if (todos.length === 0 || todos.at(-1)?.text) {
-      setTodos([...todos, { text: "", completed: false }]);
-    }
-  }, [todos]);
- 
-  // add some debounce for saving?
-  // save on blur, with optimistic response?
-  const handleOnChange = (event, index) => {
-    const updatedTodos = [...todos];
-    updatedTodos[index].text = event.target.value;
-    setTodos(updatedTodos);
-  };
-  
-  const handleOnBlur = (event, id) => {
-    const text = event.target.value.trim();
-    
-    // Only add if there is text
-    if (text !== "") {
-      addTodoToList(id, text);
-    }
-  };
-  
-  const handleKeyDown = (event, index, id) => {
-    if (event.key === "Enter" || event.key === "Tab") {
+  const handleAddTodo = async (event, id) => {
+    if (event.key === "Enter") {
       event.preventDefault();
-      const text = event.target.value.trim();
+      const text = newTodoText.trim();
       if (text !== "") {
-        addTodoToList(id, text);
+          await addTodoToList(id, text);
+          setNewTodoText("");
       }
     }
   };
-  
+
   return (
     <Card sx={{ margin: "0 1rem" }}>
       <CardContent>
         <Typography component="h2">{todoList.title}</Typography>
-        <form
-          style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
-        >
-          {todos?.map((todo, index) => (
-            <div key={index} style={{ display: "flex", alignItems: "center" }}>
+        <form style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+          {todoList.todos?.map((todo, index) => (
+            <div key={todo.id} style={{ display: "flex", alignItems: "center" }}>
               <Typography sx={{ margin: "8px" }} variant="h6">
                 {index + 1}
               </Typography>
@@ -69,31 +43,38 @@ export const TodoListForm = ({
                 sx={{ flexGrow: 1, marginTop: "1rem" }}
                 label="What to do?"
                 value={todo.text}
-                onChange={(event) => handleOnChange(event, index)}
-                onBlur={(event) => handleOnBlur(event, todoList.id)}
-                onKeyDown={(event) => handleKeyDown(event, index, todoList.id)}
+                disabled={true}
               />
-              {todo?.text?.trim() !== "" && todo.id && (
-                <Button
-                  sx={{ margin: "8px" }}
-                  size="small"
-                  color="secondary"
-                  onClick={() => deleteTodo(todoList.id, todo.id)}
-                >
-                  <DeleteIcon />
-                </Button>
-              )}
-              {todo.id && (
-                <Checkbox
-                  onClick={async () =>
-                    toggleTodoCompletion(todoList.id, todo.id, !todo.completed)
-                  }
-                >
-                  <CheckIcon />
-                </Checkbox>
-              )}
+              <Button
+                sx={{ margin: "8px" }}
+                size="small"
+                color="secondary"
+                onClick={() => deleteTodo(todoList.id, todo.id)}
+              >
+                <DeleteIcon />
+              </Button>
+              <Checkbox
+                checked={!!todo.completed}
+                onChange={() => toggleTodoCompletion(todoList.id, todo.id, !todo.completed)}
+              >
+                <CheckIcon />
+              </Checkbox>
             </div>
           ))}
+
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Typography sx={{ margin: "8px" }} variant="h6">
+              {(todoList.todos?.length || 0) + 1}
+            </Typography>
+            <TextField
+              sx={{ flexGrow: 1, marginTop: "1rem" }}
+              label="Add new todo"
+              placeholder="Press enter to add todo."
+              value={newTodoText}
+              onChange={(event) => setNewTodoText(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && handleAddTodo(event, todoList.id)}
+            />
+          </div>
         </form>
       </CardContent>
     </Card>

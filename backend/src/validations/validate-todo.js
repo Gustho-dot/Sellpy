@@ -8,14 +8,10 @@
  * 
  * @property {number?} completed OPTIONAL
 */
-export const validateTodoInput = ({ id, text, completed }) => {
+export const validateTodoInput = (text, completed) => {
     // TODO: instead of throwing return message and code, 
     // or some form structure so we can return and set error on correct field.
     // TODO: use zod
-    if (typeof id !== 'number') {
-      throw new Error("Invalid ID");
-    }
-  
     if (typeof text !== 'string' || text.trim() === "") {
       throw new Error("Invalid todo text");
     }
